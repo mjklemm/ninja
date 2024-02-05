@@ -240,15 +240,27 @@ void Usage(const BuildConfig& config) {
 
 /// Choose a default value for the -j (parallelism) flag.
 int GuessParallelism() {
-  switch (int processors = GetProcessorCount()) {
+  int nprocs = GetProcessorCount();
+  switch (nprocs) {
   case 0:
   case 1:
-    return 2;
   case 2:
-    return 3;
+    nprocs++;
+    break;
   default:
-    return processors + 2;
+    nprocs += 2;
+    break;
   }
+
+  const char * nprocs_str = getenv("NINJA_NPROCS");
+  if (!nprocs_str) return nprocs;
+
+  char * end;
+  auto nprocs_env = strtol(nprocs_str, &end, 10);
+
+  if (*end != 0 || nprocs_env <= 0) return nprocs;
+
+  return int(nprocs_env);
 }
 
 /// Rebuild the build manifest, if necessary.
