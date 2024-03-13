@@ -263,6 +263,19 @@ int GuessParallelism() {
   return int(nprocs_env);
 }
 
+/// Returns verbosity mode from the environment variable
+int HasVerbose() {
+  const char * verbose_str = getenv("NINJA_VERBOSE");
+  if (!verbose_str) return 0;
+
+  char * end;
+  auto verbose = strtol(verbose_str, &end, 10);
+
+  if (*end != 0 || verbose <= 0) return 0;
+
+  return verbose > 0;
+}
+
 /// Rebuild the build manifest, if necessary.
 /// Returns true if the manifest was rebuilt.
 bool NinjaMain::RebuildManifest(const char* input_file, string* err,
@@ -1515,6 +1528,9 @@ int ReadFlags(int* argc, char*** argv,
   }
   *argv += optind;
   *argc -= optind;
+
+  if (HasVerbose())
+    config->verbosity = BuildConfig::VERBOSE;
 
   return -1;
 }
